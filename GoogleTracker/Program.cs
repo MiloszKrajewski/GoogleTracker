@@ -10,6 +10,7 @@ namespace GoogleTracker
     {
         static void Main(string[] args)
         {
+            var results = Query.GetSearchResults("Flying Colors");
         }
     }
 }
