@@ -2,6 +2,7 @@
 using System.IO;
 using System.Net;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using HtmlAgilityPack;
 
@@ -14,13 +15,14 @@ namespace GoogleTracker
         /* will only do one page now TODO fix */
         public static List<Result> GetSearchResults(string query)
         {
-            List<Result> ret = new List<Result>();
+            var ret = new List<Result>();
             string sanitised = SanitiseQuery(query);
 
             WebRequest wr = WebRequest.Create(googleQueryURL + sanitised);
             Stream pageStream = wr.GetResponse().GetResponseStream();
 
-            StreamReader sr = new StreamReader(pageStream);
+            Debug.Assert(pageStream != null, "pageStream != null");
+            var sr = new StreamReader(pageStream);
             string page = sr.ReadToEnd();
 
             HtmlDocument htmlDoc = new HtmlDocument();
@@ -28,9 +30,11 @@ namespace GoogleTracker
 
             SearchInstance si = ExtractSearchInstance(htmlDoc, query);
 
-            foreach (var result in htmlDoc.DocumentNode.SelectNodes("//div[@class='g']"))
+            foreach (var result in htmlDoc.DocumentNode.SelectNodes(".//div[@class='g']"))
             {
-                ret.Add(ResultFromRaw(result, si));
+                var processedResult = ResultFromRaw(result, si);
+                if (processedResult != null)
+                    ret.Add(processedResult);
             }
             return ret;
         }
@@ -69,9 +73,11 @@ namespace GoogleTracker
 
         public static Result ResultFromRaw(HtmlNode node, SearchInstance si)
         {
-            var rawTitle = node.SelectSingleNode("//h3[@class='r']");
-            var rawUrl = node.SelectSingleNode("//cite");
-            var rawDesc = node.SelectSingleNode("//span[@class='st']");
+            var rawTitle = node.SelectSingleNode(".//h3[@class='r']");
+            var rawUrl = node.SelectSingleNode(".//cite");
+            var rawDesc = node.SelectSingleNode(".//span[@class='st']");
+            if (rawTitle == null || rawUrl == null || rawDesc == null)
+                return null;
             return new Result()
             {
                 url = RemoveTags(rawUrl),
