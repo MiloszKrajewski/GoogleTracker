@@ -8,7 +8,7 @@ using HtmlAgilityPack;
 
 namespace GoogleTracker
 {
-    static class Query
+    public static class Query
     {
         private static string googleQueryURL = "http://google.co.uk/search?q=";
 
@@ -22,6 +22,8 @@ namespace GoogleTracker
             Stream pageStream = wr.GetResponse().GetResponseStream();
 
             Debug.Assert(pageStream != null, "pageStream != null");
+            Console.WriteLine("Page retrieved");
+
             var sr = new StreamReader(pageStream);
             string page = sr.ReadToEnd();
 
@@ -29,6 +31,7 @@ namespace GoogleTracker
             htmlDoc.LoadHtml(page);
 
             SearchInstance si = ExtractSearchInstance(htmlDoc, query);
+            Console.WriteLine("SearchInstance created");
 
             foreach (var result in htmlDoc.DocumentNode.SelectNodes(".//div[@class='g']"))
             {
@@ -36,6 +39,7 @@ namespace GoogleTracker
                 if (processedResult != null)
                     ret.Add(processedResult);
             }
+            Console.WriteLine("Processed {0} results", ret.Count);
             return ret;
         }
 
